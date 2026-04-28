@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Rate Limit Calculator</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 20px auto; padding: 0 15px; line-height: 1.6; background: #f9f9f9; color: #333; }
+        h1 { text-align: center; color: #2c3e50; margin-bottom: 30px; }
+        .calc-section { background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .input-group { margin-bottom: 15px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+        .input-group label { flex-basis: 45%; margin-right: 10px; font-weight: bold; color: #555; }
+        .input-group input, .input-group select { flex-basis: 50%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; font-size: 1rem; }
+        button { display: block; width: 100%; padding: 12px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; font-size: 1.1rem; cursor: pointer; transition: background-color 0.3s ease; }
+        button:hover { background-color: #0056b3; }
+        .output { margin-top: 25px; padding: 15px; background: #e9ecef; border-left: 5px solid #007bff; border-radius: 5px; word-wrap: break-word; font-family: monospace; color: #343a40; }
+        .error { color: red; margin-top: 10px; text-align: center; }
+        #purchase-btn { margin-top: 20px; background-color: #28a745; }
+        #purchase-btn:hover { background-color: #218838; }
+    </style>
+</head>
+<body>
+    <h1>API Rate Limit Calculator</h1>
+    <div class="calc-section">
+        <form id="rateLimitForm">
+            <div class="input-group">
+                <label for="requests">Requests per time unit:</label>
+                <input type="number" id="requests" value="100" min="1" required>
+            </div>
+            <div class="input-group">
+                <label for="timeUnit">Time Unit:</label>
+                <select id="timeUnit">
+                    <option value="second">Second</option>
+                    <option value="minute" selected>Minute</option>
+                    <option value="hour">Hour</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="burst">Burst Limit (optional):</label>
+                <input type="number" id="burst" placeholder="e.g., 50" min="0">
+            </div>
+            <div class="input-group">
+                <label for="concurrency">Max Concurrent Requests (optional):</label>
+                <input type="number" id="concurrency" placeholder="e.g., 5" min="1">
+            </div>
+            <button type="submit">Calculate Rate Limits</button>
+            <div class="output" id="output"></div>
+            <p class="error" id="error-message"></p>
+        </form>
+    </div>
+    <button id="purchase-btn">Unlock All Features for $9.99</button>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('rateLimitForm');
+            const outputDiv = document.getElementById('output');
+            const purchaseBtn = document.getElementById('purchase-btn');
+            const errorMessage = document.getElementById('error-message');
+
+            const calculateLimits = () => {
+                errorMessage.textContent = '';
+                const requests = parseFloat(document.getElementById('requests').value);
+                const timeUnit = document.getElementById('timeUnit').value;
+                const burst = parseFloat(document.getElementById('burst').value) || 0;
+                const concurrency = parseFloat(document.getElementById('concurrency').value) || 1;
+
+                if (isNaN(requests) || requests <= 0) {
+                    errorMessage.textContent = 'Please enter a valid number of requests.';
+                    return;
+                }
+
+                let totalSeconds;
+                switch (timeUnit) {
+                    case 'second': totalSeconds = 1; break;
+                    case 'minute': totalSeconds = 60; break;
+                    case 'hour': totalSeconds = 3600; break;
+                }
+
+                const delayPerRequest = (totalSeconds / requests).toFixed(3);
+                const maxRequestsIn5Min = Math.floor(requests * (300 / totalSeconds));
+                const effectiveConcurrency = Math.min(concurrency, requests);
+                const burstInfo = burst > 0 ? `Burst capacity: ${burst} requests.` : 'No explicit burst limit.';
+
+                outputDiv.innerHTML = `
+                    <p><strong>Recommended delay between requests:</strong> ${delayPerRequest} seconds</p>
+                    <p><strong>Maximum requests in 1 second:</strong> ${requests / totalSeconds}</p>
+                    <p><strong>Maximum requests in 1 minute:</strong> ${requests * (60 / totalSeconds)}</p>
+                    ${timeUnit !== 'hour' ? `<p><strong>Maximum requests in 1 hour:</strong> ${requests * (3600 / totalSeconds)}</p>` : ''}
+                    <p><strong>Maximum requests in a 5-minute window:</strong> approx. ${maxRequestsIn5Min}</p>
+                    <p><strong>Effective concurrent requests:</strong> ${effectiveConcurrency}</p>
+                    <p>${burstInfo}</p>
+                    <hr>
+                    <p><em>Note: These are theoretical calculations. Always refer to the API provider's official documentation.</em></p>
+                `;
+            };
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                calculateLimits();
+            });
+
+            // Initial calculation on load
+            calculateLimits();
+
+            // Dummy purchase button - in a real app, this would integrate with Stripe
+            purchaseBtn.addEventListener('click', () => {
+                alert('Integration with Stripe Checkout would go here! Imagine your features are unlocked!');
+                purchaseBtn.textContent = 'Features Unlocked!';
+                purchaseBtn.disabled = true;
+                purchaseBtn.style.backgroundColor = '#6c757d';
+            });
+        });
+    </script>
+</body>
+</html>
